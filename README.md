@@ -1,4 +1,4 @@
-enr
+vnr
 ============
 
 [![Build Status]][Build Link] [![Doc Status]][Doc Link] [![Crates
@@ -13,14 +13,14 @@ Status]][Crates Link]
 
 [Documentation at docs.rs](https://docs.rs/enr)
 
-This crate contains an implementation of an Ethereum Node Record (ENR) as specified by
+This crate contains an implementation of an Vapory Node Record (VNR) as specified by
 [EIP-778](https://eips.ethereum.org/EIPS/eip-778) extended to allow for the use of ed25519 keys.
 
-An ENR is a signed, key-value record which has an associated `NodeId` (a 32-byte identifier).
-Updating/modifying an ENR requires an `EnrKey` in order to re-sign the record with the
+An VNR is a signed, key-value record which has an associated `NodeId` (a 32-byte identifier).
+Updating/modifying an VNR requires an `VnrKey` in order to re-sign the record with the
 associated key-pair.
 
-ENR's are identified by their sequence number. When updating an ENR, the sequence number is
+VNR's are identified by their sequence number. When updating an VNR, the sequence number is
 increased.
 
 Different identity schemes can be used to define the node id and signatures. Currently only the
@@ -29,14 +29,14 @@ Different identity schemes can be used to define the node id and signatures. Cur
 ## Signing Algorithms
 
 User's wishing to implement their own singing algorithms simply need to
-implement the `EnrKey` trait and apply it to an `Enr`.
+implement the `VnrKey` trait and apply it to an `Vnr`.
 
-By default, `libsecp256k1::SecretKey` implement `EnrKey` and can be used to sign and
-verify ENR records. This library also implements `EnrKey` for `ed25519_dalek::Keypair` via the `ed25519`
+By default, `libsecp256k1::SecretKey` implement `VnrKey` and can be used to sign and
+verify ENR records. This library also implements `VnrKey` for `ed25519_dalek::Keypair` via the `ed25519`
 feature flag.
 
 Furthermore, a `CombinedKey` is provided if the `ed25519` feature flag is set, which provides an
-ENR type that can support both `secp256k1` and `ed25519` signed ENR records. Examples of the
+VNR type that can support both `secp256k1` and `ed25519` signed VNR records. Examples of the
 use of each of these key types is given below.
 
 ## Features
@@ -50,17 +50,17 @@ This crate supports a number of features.
 These can be enabled via adding the feature flag in your `Cargo.toml`
 
 ```toml
-enr = { version = "*", features = ["serde", "ed25519", "rust-secp256k1"] }
+vnr = { version = "*", features = ["serde", "ed25519", "rust-secp256k1"] }
 ```
 
 ## Examples
 
-To build an ENR, an `EnrBuilder` is provided.
+To build an VNR, an `VnrBuilder` is provided.
 
-#### Building an ENR with the default `secp256k1` key type
+#### Building an VNR with the default `secp256k1` key type
 
 ```rust
-use enr::{EnrBuilder, secp256k1};
+use vnr::{EnrBuilder, secp256k1};
 use std::net::Ipv4Addr;
 use rand::thread_rng;
 
@@ -69,19 +69,19 @@ let mut rng = thread_rng();
 let key = secp256k1::SecretKey::random(&mut rng);
 
 let ip = Ipv4Addr::new(192,168,0,1);
-let enr = EnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
+let vnr = VnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
 
 assert_eq!(enr.ip(), Some("192.168.0.1".parse().unwrap()));
 assert_eq!(enr.id(), Some("v4".into()));
 ```
 
-#### Building an ENR with the `CombinedKey` type (support for multiple signing algorithms).
+#### Building an VNR with the `CombinedKey` type (support for multiple signing algorithms).
 
 Note the `ed25519` feature flag must be set. This makes use of the
-`EnrBuilder` struct.
+`VnrBuilder` struct.
 
 ```rust
-use enr::{EnrBuilder, CombinedKey};
+use vnr::{VnrBuilder, CombinedKey};
 use std::net::Ipv4Addr;
 
 // create a new secp256k1 key
@@ -91,19 +91,19 @@ let key = CombinedKey::generate_secp256k1();
 let key = CombinedKey::generate_ed25519();
 
 let ip = Ipv4Addr::new(192,168,0,1);
-let enr = EnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
+let vnr = VnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
 
 assert_eq!(enr.ip(), Some("192.168.0.1".parse().unwrap()));
 assert_eq!(enr.id(), Some("v4".into()));
 ```
 
-#### Modifying an ENR
+#### Modifying an VNR
 
-Enr fields can be added and modified using the getters/setters on `Enr`. A custom field
+Vnr fields can be added and modified using the getters/setters on `Vnr`. A custom field
 can be added using `insert` and retrieved with `get`.
 
 ```rust
-use enr::{EnrBuilder, secp256k1::SecretKey, Enr};
+use vnr::{VnrBuilder, secp256k1::SecretKey, Vnr};
 use std::net::Ipv4Addr;
 use rand::thread_rng;
 
@@ -112,28 +112,28 @@ let mut rng = thread_rng();
 let key = SecretKey::random(&mut rng);
 
 let ip = Ipv4Addr::new(192,168,0,1);
-let mut enr = EnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
+let mut vnr = VnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
 
-enr.set_tcp(8001, &key);
+vnr.set_tcp(8001, &key);
 // set a custom key
-enr.insert("custom_key", vec![0,0,1], &key);
+vnr.insert("custom_key", vec![0,0,1], &key);
 
 // encode to base64
-let base_64_string = enr.to_base64();
+let base_64_string = vnr.to_base64();
 
 // decode from base64
-let decoded_enr: Enr = base_64_string.parse().unwrap();
+let decoded_enr: Vnr = base_64_string.parse().unwrap();
 
-assert_eq!(decoded_enr.ip(), Some("192.168.0.1".parse().unwrap()));
-assert_eq!(decoded_enr.id(), Some("v4".into()));
-assert_eq!(decoded_enr.tcp(), Some(8001));
-assert_eq!(decoded_enr.get("custom_key"), Some(&vec![0,0,1]));
+assert_eq!(decoded_vnr.ip(), Some("192.168.0.1".parse().unwrap()));
+assert_eq!(decoded_vnr.id(), Some("v4".into()));
+assert_eq!(decoded_vnr.tcp(), Some(8001));
+assert_eq!(decoded_vnr.get("custom_key"), Some(&vec![0,0,1]));
 ```
 
-#### Encoding/Decoding ENR's of various key types
+#### Encoding/Decoding VNR's of various key types
 
 ```rust
-use enr::{EnrBuilder, secp256k1::SecretKey, Enr, ed25519_dalek::Keypair, CombinedKey};
+use vnr::{VnrBuilder, secp256k1::SecretKey, Vnr, ed25519_dalek::Keypair, CombinedKey};
 use std::net::Ipv4Addr;
 use rand::thread_rng;
 use rand::Rng;
@@ -142,24 +142,24 @@ use rand::Rng;
 let mut rng = thread_rng();
 let key = SecretKey::random(&mut rng);
 let ip = Ipv4Addr::new(192,168,0,1);
-let enr_secp256k1 = EnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
+let vnr_secp256k1 = VnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
 
 // encode to base64
-let base64_string_secp256k1 = enr_secp256k1.to_base64();
+let base64_string_secp256k1 = vnr_secp256k1.to_base64();
 
 // generate a random ed25519 key
 let key = Keypair::generate(&mut rng);
-let enr_ed25519 = EnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
+let vnr_ed25519 = VnrBuilder::new("v4").ip(ip.into()).tcp(8000).build(&key).unwrap();
 
 // encode to base64
-let base64_string_ed25519 = enr_ed25519.to_base64();
+let base64_string_ed25519 = vnr_ed25519.to_base64();
 
 // decode base64 strings of varying key types
-// decode the secp256k1 with default Enr
-let decoded_enr_secp256k1: Enr = base64_string_secp256k1.parse().unwrap();
-// decode ed25519 ENRs
-let decoded_enr_ed25519: Enr<Keypair> = base64_string_ed25519.parse().unwrap();
+// decode the secp256k1 with default Vnr
+let decoded_vnr_secp256k1: Vnr = base64_string_secp256k1.parse().unwrap();
+// decode ed25519 VNRs
+let decoded_vnr_ed25519: Vnr<Keypair> = base64_string_ed25519.parse().unwrap();
 
 // use the combined key to be able to decode either
-let decoded_enr: Enr<CombinedKey> = base64_string_secp256k1.parse().unwrap();
-let decoded_enr: Enr<CombinedKey> = base64_string_ed25519.parse().unwrap();
+let decoded_vnr: Vnr<CombinedKey> = base64_string_secp256k1.parse().unwrap();
+let decoded_vnr: Vnr<CombinedKey> = base64_string_ed25519.parse().unwrap();
